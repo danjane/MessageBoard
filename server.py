@@ -3,6 +3,13 @@
 import socket
 
 
+def get_host_ip():
+    host = socket.gethostbyname(socket.gethostname())
+    print(f"Server running on host = '{host}'")
+    print("Remember to change this in listener.py and sender.py")
+    return host
+
+
 def run():
     global messages
     host = '127.0.0.1'  # Loopback address for local testing
@@ -19,10 +26,15 @@ def run():
 
 
 def receive(udp_sock):
-    data, addr = udp_sock.recvfrom(1024)
-    package = data.decode("utf-8")
-    print("Received package: " + package + " >from " + str(addr))
-    group, message = safe_split(package)
+    message = None
+    while not message:
+        try:
+            data, addr = udp_sock.recvfrom(1024)
+            package = data.decode("utf-8")
+            print("Received package: " + package + " >from " + str(addr))
+            group, message = safe_split(package)
+        except Exception as e:
+            print(e)
     return data, addr, message, group
 
 
@@ -65,5 +77,5 @@ def setup_socket(host, port):
 
 
 if __name__ == "__main__":
-    run()
+    run(get_host_ip())
 
