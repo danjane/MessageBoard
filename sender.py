@@ -12,5 +12,5 @@ UDPSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 name = input("Enter your name: ")
 while True:
     message = input("Enter message: ")
-    data = bytearray(name + "|" + message, "utf-8")
+    data = bytearray(name + "> " + message, "utf-8")
     UDPSock.sendto(data, addr)

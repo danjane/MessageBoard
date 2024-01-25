@@ -6,13 +6,11 @@ import socket
 def get_host_ip():
     host = socket.gethostbyname(socket.gethostname())
     print(f"Server running on host = '{host}'")
-    print("Remember to change this in listener.py and sender.py")
+    print("Changes needed in listener.py and sender.py\n")
     return host
 
 
-def run():
-    global messages
-    host = '127.0.0.1'  # Loopback address for local testing
+def run(host):
     port = 13000
 
     udp_sock = setup_socket(host, port)
@@ -20,9 +18,16 @@ def run():
     listeners = []
     print("Waiting to receive messages...")
     while True:
-        data, addr, message, group = receive(udp_sock)
-        store_message(message, group, addr)
-        listeners = action_message(udp_sock, data, message, group, addr)
+        data, addr, message = receive(udp_sock)
+        store_message(message, addr)
+        if message == "AddAsListener":
+            print("Adding a new listener: " + str(addr))
+            listeners.append(addr)
+            replay_messages(messages, addr)
+        else:
+            for listener_addr in listeners:
+                print(message + str(addr))
+                udp_sock.sendto(data, listener_addr)
 
 
 def receive(udp_sock):
@@ -30,38 +35,15 @@ def receive(udp_sock):
     while not message:
         try:
             data, addr = udp_sock.recvfrom(1024)
-            package = data.decode("utf-8")
-            print("Received package: " + package + " >from " + str(addr))
-            group, message = safe_split(package)
+            message = data.decode("utf-8")
         except Exception as e:
             print(e)
-    return data, addr, message, group
+        print("Received message: " + message + " >from " + str(addr))
+    return data, addr, message
 
 
-def safe_split(package):
-    pieces = package.split("|")
-    if len(pieces) == 2:
-        group, message = pieces
-    else:
-        group = None
-        message = pieces
-    return group, message
-
-
-def store_message(message, group, addr):
-    messages.append([message, group, addr])
-
-
-def action_message(udp_sock, data, message, group, addr, listeners):
-    if message == "AddAsListener":
-        print("Adding a new listener: " + str(addr))
-        listeners.append(addr)
-        replay_messages(messages, addr)
-    else:
-        for listener_addr in listeners:
-            print(message + str(addr))
-            udp_sock.sendto(data, listener_addr)
-    return listeners
+def store_message(message, addr):
+    pass
 
 
 def replay_messages(messages, addr):

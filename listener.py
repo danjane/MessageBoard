@@ -15,6 +15,7 @@ UDPSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 UDPSock.sendto(bytearray("AddAsListener", "utf-8"), addr)
 
 # Receive messages
+print("Welcome to MessageBoard...s")
 while True:
     (data, addr) = UDPSock.recvfrom(buffer)
     message = data.decode("utf-8")
