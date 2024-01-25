@@ -1,5 +1,3 @@
-# Save as listener.py
-# Listen and print all messages
 import socket
 
 # Set up network connection

@@ -1,5 +1,3 @@
-# Save as client.py 
-# Message Sender
 import socket
 
 # host = "10.146.161.162" # set to IP address of target computer

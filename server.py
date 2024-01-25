@@ -1,5 +1,3 @@
-# Save as server.py 
-# Message Receiver
 import socket
 
 
