@@ -1,11 +1,10 @@
 import socket
+import server
 
 # Set up network connection
-# host = "10.146.161.162" # set to IP address of target computer
-host = '127.0.0.1'  # Loopback address for local testing
 port = 13000
 buffer = 1024
-addr = (host, port)
+addr = (server.host, port)
 UDPSock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 UDPSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -13,7 +12,7 @@ UDPSock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 UDPSock.sendto(bytearray("AddAsListener", "utf-8"), addr)
 
 # Receive messages
-print("Welcome to MessageBoard...s")
+print("Welcome to MessageBoard...")
 while True:
     (data, addr) = UDPSock.recvfrom(buffer)
     message = data.decode("utf-8")
