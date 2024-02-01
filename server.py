@@ -18,33 +18,25 @@ def run(host_, conn):
     port = 13000
 
     udp_sock = setup_socket(host_, port)
-    messages = []
     listeners = []
     print("Waiting to receive messages...")
     while True:
-        data, addr, message = receive(udp_sock)
+        data, addr = receive(udp_sock)
         store_message(data, addr, conn)
-        if message == "AddAsListener":
-            print("Adding a new listener: " + str(addr))
-            listeners.append(addr)
-            replay_messages(udp_sock, addr, conn)
-        else:
-            for listener_addr in listeners:
-                print(message + str(addr))
-                udp_sock.sendto(data, listener_addr)
+        action_message(udp_sock, data, addr, conn)
 
 
 def receive(udp_sock):
-    message = None
-    while not message:
+    data = None
+    while not data:
         try:
             data, addr = udp_sock.recvfrom(1024)
-            message = data.decode("utf-8")
+            data = data.decode("utf-8")
+            print("Received message: " + data + " >from " + str(addr))
         except Exception as e:
             print("Error during receive!!")
             print(e)
-        print("Received message: " + message + " >from " + str(addr))
-    return data, addr, message
+    return data, addr
 
 
 def store_message(data, addr, conn):
@@ -52,6 +44,26 @@ def store_message(data, addr, conn):
                      [(addr[0], addr[1], data)])
     conn.commit()
     return None
+
+
+def action_message(udp_sock, data, addr, conn):
+    pieces = data.split("|")
+    if pieces[0] == "AddAsListener":
+        add_listener(data, addr, conn)
+    elif pieces[0] == "AddAsSender":
+        print("todo")
+    else:
+        listeners = conn.execute("SELECT ip, port FROM listener")
+        for addr in listeners.fetchall():
+            print(data + str(addr))
+            udp_sock.sendto(bytearray(data, "utf-8"), addr)
+
+
+def add_listener(udp_sock, addr, conn):
+        print("Adding a new listener: " + str(addr))
+        conn.execute("INSERT INTO listener(ip, port) VALUES (?, ?)",
+                     (addr[0], addr[1]))
+        replay_messages(udp_sock, addr, conn)
 
 
 def replay_messages(udp_sock, addr, conn):

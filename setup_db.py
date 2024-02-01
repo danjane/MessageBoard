@@ -11,8 +11,9 @@ conn.execute('''
     CREATE TABLE IF NOT EXISTS User (
         user_id INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
-        eduge_id TEXT NOT NULL,
-        password TEXT NOT NULL
+        password TEXT NOT NULL,
+        ip TEXT NOT NULL,
+        port TEXT NOT NULL
     )
 ''')
 
@@ -50,14 +51,25 @@ conn.execute('''
     )
 ''')
 
+
+conn.execute('''
+    CREATE TABLE IF NOT EXISTS Listener (
+        listener_id INTEGER PRIMARY KEY,
+        chat_id INTEGER,
+        ip VARCHAR NOT NULL,
+        port INTEGER NOT NULL,
+        FOREIGN KEY (chat_id) REFERENCES Chat(chat_id)
+    )
+''')
+
 # Create Raw Table
 conn.execute('''
     CREATE TABLE IF NOT EXISTS Raw (
         raw_id INTEGER PRIMARY KEY,
+        time TEXT DEFAULT CURRENT_TIMESTAMP,
         ip TEXT NOT NULL,
-        port TEXT NOT NULL,
-        data TEXT NOT NULL,
-        message_date TEXT DEFAULT CURRENT_TIMESTAMP
+        port INTEGER NOT NULL,
+        data TEXT NOT NULL
     )
 ''')
 
