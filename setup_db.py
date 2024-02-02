@@ -12,8 +12,8 @@ conn.execute('''
         user_id INTEGER PRIMARY KEY,
         name TEXT NOT NULL,
         password TEXT NOT NULL,
-        ip TEXT NOT NULL,
-        port TEXT NOT NULL
+        ip TEXT,
+        port INTEGER
     )
 ''')
 
@@ -56,7 +56,7 @@ conn.execute('''
     CREATE TABLE IF NOT EXISTS Listener (
         listener_id INTEGER PRIMARY KEY,
         chat_id INTEGER,
-        ip VARCHAR NOT NULL,
+        ip TEXT NOT NULL,
         port INTEGER NOT NULL,
         FOREIGN KEY (chat_id) REFERENCES Chat(chat_id)
     )
@@ -73,7 +73,7 @@ conn.execute('''
     )
 ''')
 
-# Commit changes and close connection
+# Commit changes
 conn.commit()
 
 result = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
@@ -90,6 +90,12 @@ for table_name in table_names:
     print("......" + table_name)
 
 print("Tables created successfully.")
+
+conn.execute("INSERT INTO User (name, password, ip, port) VALUES ('x', 'x', 'x', 1)")
+conn.execute("INSERT INTO Chat (chat_name, password) VALUES ('x', 'x')")
+
+# Commit changes and close connection
+conn.commit()
 
 conn.close()
 
