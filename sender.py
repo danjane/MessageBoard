@@ -17,6 +17,6 @@ UDPSock.sendto(data, addr)
 
 # Send messages
 while True:
-    message = input("Enter message: ")
+    message = input("Enter message (or q for quit): ")
     data = bytearray(message, "utf-8")
     UDPSock.sendto(data, addr)

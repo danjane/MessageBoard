@@ -40,6 +40,8 @@ def action_message(udp_sock, data, addr, conn):
         add_listener(udp_sock, pieces, addr, conn)
     elif pieces[0] == "AddAsSender":
         add_sender(conn, pieces, addr)
+    elif pieces[0] == "q":
+        remove_sender(conn, addr)
     else:
         message_id = store_message(pieces[0], addr, conn)
         if message_id:
@@ -47,8 +49,22 @@ def action_message(udp_sock, data, addr, conn):
 
 
 def store_message(message, addr, conn):
-    cursor = conn.execute("INSERT INTO message(user_id, chat_id, content) VALUES(?, ?, ?)",
-                 (1, 1, message))
+    query = conn.execute('''
+        SELECT user_id 
+        FROM User 
+        WHERE ip = ? and port = ?
+    ''', (addr[0], addr[1]))
+    possibles = query.fetchall()
+    print(possibles)
+    if len(possibles) != 1:
+        return None
+    else:
+        user_id = possibles[0]
+    cursor = conn.execute('''
+        INSERT INTO message
+        (user_id, chat_id, content) 
+        VALUES(?, ?, ?)
+    ''', (user_id, 1, message))
     conn.commit()
     return cursor.lastrowid
 
@@ -77,7 +93,15 @@ def add_sender(conn, pieces, addr):
         SET ip = ?, port = ?
         WHERE name = ? AND password = ?
     ''', (addr[0], addr[1], name, password))
+    conn.commit()
 
+
+def remove_sender(conn, addr):
+    conn.execute('''
+        UPDATE User
+        SET ip = "x", port = 1
+        WHERE ip = ? AND port = ?
+    ''', (addr[0], addr[1]))
     conn.commit()
 
 

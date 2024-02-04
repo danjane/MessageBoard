@@ -13,7 +13,8 @@ conn.execute('''
         name TEXT NOT NULL,
         password TEXT NOT NULL,
         ip TEXT,
-        port INTEGER
+        port INTEGER,
+        CONSTRAINT unique_name_password UNIQUE (name, password)
     )
 ''')
 
@@ -91,7 +92,7 @@ for table_name in table_names:
 
 print("Tables created successfully.")
 
-conn.execute("INSERT INTO User (name, password, ip, port) VALUES ('x', 'x', 'x', 1)")
+conn.execute("INSERT INTO User (name, password) VALUES ('x', 'x')")
 conn.execute("INSERT INTO Chat (chat_name, password) VALUES ('x', 'x')")
 
 # Commit changes and close connection
