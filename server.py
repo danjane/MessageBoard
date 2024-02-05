@@ -91,12 +91,32 @@ def add_sender(conn, pieces, addr):
         print("Expected 3 pieces as Command|Name|Password")
         return None
     _, name, password = pieces
+    if new_sender(conn, name):
+        create_sender(conn, name, password)
+
     cursor = conn.execute('''
         UPDATE User
         SET ip = ?, port = ?
         WHERE name = ? AND password = ?
     ''', (addr[0], addr[1], name, password))
     print(f"Adding sender... {cursor.rowcount} rows updated.")
+    conn.commit()
+
+
+def new_sender(conn, name):
+    query = conn.execute('''
+    SELECT * from user
+    WHERE name = ?
+    ''', (name,))
+    return len(query.fetchall()) == 0
+
+
+def create_sender(conn, name, password):
+    conn.execute('''
+        INSERT INTO user
+        (name, password)
+        VALUES (?, ?)  
+    ''', (name, password))
     conn.commit()
 
 
@@ -111,17 +131,18 @@ def remove_sender(conn, addr):
 
 def transmit_message(udp_sock, conn, message_id):
     query = conn.execute('''
-        SELECT Message.content, Message.message_date, User.name 
+        SELECT Message.message_date, User.name, Message.content 
         FROM User JOIN Message ON Message.user_id == User.user_id 
         WHERE Message.message_id == ?
      ''', (message_id,))
-    message, time, name = query.fetchone()
+    text = "|".join(query.fetchone())
+    data = bytearray(text, "utf-8")
 
     query = conn.execute("SELECT ip, port FROM listener")
     listeners = query.fetchall()
-    print(f"({str(time)}) {name}: {message} > " + str(listeners))
+    print(f"{text} > " + str(listeners))
     for addr_to in listeners:
-        udp_sock.sendto(bytearray(message, "utf-8"), addr_to)
+        udp_sock.sendto(data, addr_to)
 
 
 def setup_socket(host_, port):
