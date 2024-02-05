@@ -6,7 +6,7 @@ db_file = 'message_board.db'
 # Connect to SQLite database (creates a new one if not exists)
 conn = sqlite3.connect(db_file)
 
-# Create Users Table
+# Create User Table
 conn.execute('''
     CREATE TABLE IF NOT EXISTS User (
         user_id INTEGER PRIMARY KEY,
@@ -18,37 +18,15 @@ conn.execute('''
     )
 ''')
 
-# Create Groups Table
-conn.execute('''
-    CREATE TABLE IF NOT EXISTS Chat (
-        chat_id INTEGER PRIMARY KEY,
-        chat_name TEXT NOT NULL,
-        password TEXT NOT NULL
-    )
-''')
-
-# Create Group_Members Table
-conn.execute('''
-    CREATE TABLE IF NOT EXISTS Chat_Members (
-        chat_id INTEGER NOT NULL,
-        user_id INTEGER NOT NULL,
-        FOREIGN KEY (chat_id) REFERENCES Chat(chat_id),
-        FOREIGN KEY (user_id) REFERENCES User(user_id),
-        PRIMARY KEY (chat_id, user_id)
-    )
-''')
-
 # Create Messages Table
 conn.execute('''
     CREATE TABLE IF NOT EXISTS Message (
         message_id INTEGER PRIMARY KEY,
         user_id INTEGER NOT NULL,
-        chat_id INTEGER NOT NULL,
         encryption INTEGER,
         content TEXT NOT NULL,
         message_date TEXT DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES User(user_id),
-        FOREIGN KEY (chat_id) REFERENCES Chat(chat_id)
+        FOREIGN KEY (user_id) REFERENCES User(user_id)
     )
 ''')
 
@@ -56,21 +34,8 @@ conn.execute('''
 conn.execute('''
     CREATE TABLE IF NOT EXISTS Listener (
         listener_id INTEGER PRIMARY KEY,
-        chat_id INTEGER,
         ip TEXT NOT NULL,
-        port INTEGER NOT NULL,
-        FOREIGN KEY (chat_id) REFERENCES Chat(chat_id)
-    )
-''')
-
-# Create Raw Table
-conn.execute('''
-    CREATE TABLE IF NOT EXISTS Raw (
-        raw_id INTEGER PRIMARY KEY,
-        time TEXT DEFAULT CURRENT_TIMESTAMP,
-        ip TEXT NOT NULL,
-        port INTEGER NOT NULL,
-        data TEXT NOT NULL
+        port INTEGER NOT NULL
     )
 ''')
 
@@ -93,7 +58,6 @@ for table_name in table_names:
 print("Tables created successfully.")
 
 conn.execute("INSERT INTO User (name, password) VALUES ('x', 'x')")
-conn.execute("INSERT INTO Chat (chat_name, password) VALUES ('x', 'x')")
 
 # Commit changes and close connection
 conn.commit()

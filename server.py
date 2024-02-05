@@ -16,8 +16,8 @@ def run(host_, conn):
     udp_sock = setup_socket(host_, port)
     print("Waiting to receive messages...")
     while True:
-        data, addr = receive(udp_sock)
-        action_message(udp_sock, data, addr, conn)
+        message, addr = receive(udp_sock)
+        action_message(udp_sock, message, addr, conn)
 
 
 def receive(udp_sock):
@@ -34,16 +34,17 @@ def receive(udp_sock):
     return data, addr
 
 
-def action_message(udp_sock, data, addr, conn):
-    pieces = data.split("|")
-    if pieces[0] == "AddAsListener":
-        add_listener(udp_sock, pieces, addr, conn)
-    elif pieces[0] == "AddAsSender":
+def action_message(udp_sock, message, addr, conn):
+    pieces = message.split("|")
+    command = pieces[0]
+    if command == "AddAsListener":
+        add_listener(udp_sock, addr, conn)
+    elif command == "AddAsSender":
         add_sender(conn, pieces, addr)
-    elif pieces[0] == "q":
+    elif command == "q":
         remove_sender(conn, addr)
     else:
-        message_id = store_message(pieces[0], addr, conn)
+        message_id = store_message(message, addr, conn)
         if message_id:
             transmit_message(udp_sock, conn, message_id)
 
@@ -55,21 +56,20 @@ def store_message(message, addr, conn):
         WHERE ip = ? and port = ?
     ''', (addr[0], addr[1]))
     possibles = query.fetchall()
-    print(possibles)
     if len(possibles) != 1:
         return None
     else:
-        user_id = possibles[0]
+        user_id = possibles[0][0]
     cursor = conn.execute('''
         INSERT INTO message
-        (user_id, chat_id, content) 
-        VALUES(?, ?, ?)
-    ''', (user_id, 1, message))
+        (user_id, content) 
+        VALUES(?, ?)
+    ''', (user_id, message))
     conn.commit()
     return cursor.lastrowid
 
 
-def add_listener(udp_sock, data, addr, conn):
+def add_listener(udp_sock, addr, conn):
     print("Adding a new listener: " + str(addr))
     conn.execute("INSERT INTO listener(ip, port) VALUES (?, ?)",
                  (addr[0], addr[1]))
@@ -77,9 +77,12 @@ def add_listener(udp_sock, data, addr, conn):
 
 
 def replay_messages(udp_sock, addr_to, conn):
-    query = conn.execute("SELECT content, user_id FROM message")
+    query = conn.execute('''
+        SELECT message.message_date, user.name, message.content 
+        FROM user join message WHERE message.user_id = user.user_id
+    ''')
     for row in query.fetchall():
-        udp_sock.sendto(bytearray(row[0], "utf-8"), addr_to)
+        udp_sock.sendto(bytearray("|".join(row), "utf-8"), addr_to)
     return None
 
 
@@ -88,11 +91,12 @@ def add_sender(conn, pieces, addr):
         print("Expected 3 pieces as Command|Name|Password")
         return None
     _, name, password = pieces
-    conn.execute('''
+    cursor = conn.execute('''
         UPDATE User
         SET ip = ?, port = ?
         WHERE name = ? AND password = ?
     ''', (addr[0], addr[1], name, password))
+    print(f"Adding sender... {cursor.rowcount} rows updated.")
     conn.commit()
 
 
